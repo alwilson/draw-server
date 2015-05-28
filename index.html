@@ -1,0 +1,197 @@
+<html>
+<head>
+<title>Draw with me!</title>
+<script type="text/javascript">
+
+var context = null;
+
+// TODO: Find way to set this during compilation
+var wsUri = "ws://localhost:8808/";
+var output;
+
+var drawing = 0;
+
+function MouseEvent(handler, ev)
+{
+	var x, y;
+	
+	// Get the mouse position relative to the canvas element.
+	if (ev.layerX || ev.layerX == 0) { // Firefox
+		x = ev.layerX;
+		y = ev.layerY;
+	} else if (ev.offsetX || ev.offsetX == 0) { // Opera
+		x = ev.offsetX;
+		y = ev.offsetY;
+	}
+	
+	handler(x, y);
+}
+
+function Init()
+{
+	testWebSocket();
+
+	var canvas = document.getElementById("maincanvas");
+	context = canvas.getContext("2d");
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	canvas.addEventListener('mousedown', 	MouseEvent.bind(null, OnMouseDown), false);	
+	canvas.addEventListener('mouseup',   	MouseEvent.bind(null, OnMouseUp), false);	
+	canvas.addEventListener('mousemove',   	MouseEvent.bind(null, OnMouseMove), false);	
+	canvas.addEventListener('click',   	MouseEvent.bind(null, OnMouseClick), false);
+}
+
+// Button utilities
+
+function CreateButton(x, y, width, height, color, text, textColor)
+{
+	// Draw button to canvas
+	DrawRect(x, y, width, height, true, color);
+	DrawText(x, y, textColor, text, height, false);
+}
+
+// GUI utilities
+
+function DrawRect(x, y, width, height, filled, color)
+{
+    if (filled)
+    {
+        context.fillStyle = color;
+        context.fillRect(x, y, width, height);
+    }
+    else
+    {
+        context.strokeStyle = color;
+        context.strokeRect(x, y, width, height);
+    }
+}
+
+function ClearRect(x, y, width, height)
+{
+    context.clearRect(x, y, width, height);
+}
+
+function DrawText(x, y, color, text, size, bold)
+{
+    boldText = "";
+    if (bold)
+    {
+        boldText = "bold";
+    }
+    context.font = boldText + (size.toString() + "px Arial");
+    context.fillStyle = color;
+    context.fillText(text, x, y);
+}
+
+// Event handlers
+function OnMouseDown(x, y)
+{
+	drawing = 1;
+}
+
+function OnMouseUp(x, y)
+{
+	drawing = 0;
+}
+
+function OnMouseMove(x, y)
+{
+	if (drawing == 1) {
+		DrawRect(x-1, y-1, 3, 3, true, "rgb(200, 20, 20)");
+		var point = [x, y];
+		websocket.send(point); 
+	}
+}
+
+function OnMouseClick(x, y)
+{
+
+}
+
+function updateButton( index )
+{
+	var button = buttonList[index-1];
+	var x = button["x"];
+	var y = button["y"];
+	var width = button["width"];
+	var height = button["height"];
+	var color = button["color"];
+	var textColor = button["textColor"];
+	var text = button["text"];
+	DrawRect(x, y, width, height, true, textColor);
+	DrawText(x, y, color, text, height, false);
+}
+
+
+
+
+// General GUI functions
+
+function Update()
+{
+    //ClearRect(0, 0, 400, 400);
+    //DrawGUI();
+}
+
+function DrawGUI()
+{
+    DrawRect(50, 100, 80, 20, true, "rgb(200, 20, 20)");
+    
+    ClearRect(60, 105, 60, 10);
+    
+    DrawRect(48, 98, 84, 24, false, "rgb(80, 100, 90)");
+    
+    DrawText(40, 70, "rgb(0, 0, 130)", "Hello", 20, false);
+    DrawText(40, 90, "rgb(0, 130, 0)", "World!", 25, true);
+}
+
+setInterval(Update, 20);
+
+// WebSocket stuff
+
+function testWebSocket()
+{
+	websocket = new WebSocket(wsUri);
+	websocket.onopen = function(evt) { onOpen(evt) };
+	websocket.onclose = function(evt) { onClose(evt) };
+	websocket.onmessage = function(evt) { onMessage(evt) };
+	websocket.onerror = function(evt) { onError(evt) };
+}
+
+function onOpen(evt)
+{
+	DrawText(30, 30, "rgb(0, 100, 0)", "Connected", 20, false);
+	//doSend("Websockets Rocks!");
+}
+
+function onClose(evt)
+{
+	DrawText(30, 60, "rgb(100, 100, 0)", "Disconnected", 20, false); 
+	//writeToScreen("DISCONNECTED");
+}
+
+function onMessage(evt)
+{
+	//writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
+	//websocket.close();
+	
+	var data_point = evt.data;
+	var point = data_point.split(",");
+	var x = parseInt(point[0]);
+	var y = parseInt(point[1]);
+	DrawRect(x-1, y-1, 3, 3, true, "rgb(20, 20, 100)");
+}
+
+function onError(evt) 
+{ 
+	 DrawText(30, 90, "rgb(100, 0, 0)", "Error", 20, false);
+	//writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data); 
+}   
+
+</script>
+</head>
+<body onload="Init();">
+<canvas id="maincanvas" width="500" height="500"></canvas>
+</body>
+</html>
+
