@@ -27,4 +27,3 @@ Place index.html at the root of your HTTP server, then run:
 The default port can be changed in index.html, and the default hostname
 is localhost so that you can try it out before configuring your network.
 
-
